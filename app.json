@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "schema": "expo-todo-list",
+    "scheme": "expo-todo-list",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -22,13 +22,22 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.muhamadnursiramdan.expotodolist"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "8e0b0843-bb53-40a8-87e7-e2b05abbb901"
+      }
+    }
   }
 }

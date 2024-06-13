@@ -1,106 +1,89 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Alert } from "react-native";
 
-interface Data {
-  activity: string,
-  type: string,
-  participants: number,
-  price: number,
-  link: string,
-  key: string,
-  accessibility: 0.3
-}
+import { LinearGradient } from "expo-linear-gradient";
+
+import GenerateActivity from "./components/GenerateActivity";
+import SavedActivities from "./components/SavedActivities";
+
+import {
+  fetchData as fetchDataService,
+  loadSavedData,
+  saveData,
+} from "./helper/api";
+import { Data } from "./types/types";
 
 const App = () => {
-  const [data, setData] = useState<Data>();
+  const [data, setData] = useState<Data | undefined>(undefined);
   const [savedData, setSavedData] = useState<Data[]>([]);
 
   useEffect(() => {
-    fetchData();
+    const initializeData = async () => {
+      const initialData = await fetchDataService();
+      setData(initialData);
+      const initialSavedData = await loadSavedData();
+      setSavedData(initialSavedData);
+    };
+    initializeData();
   }, []);
 
   const fetchData = async () => {
-    try {
-      const response = await fetch('https://www.boredapi.com/api/activity');
-      const jsonData: Data = await response.json();
-      setData(jsonData);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    const newData = await fetchDataService();
+    setData(newData);
+  };
+
+  const handleSave = async () => {
+    if (data) {
+      const updatedSavedData = [...savedData, data];
+      setSavedData(updatedSavedData);
+      await saveData(updatedSavedData);
+      const newData = await fetchDataService();
+      setData(newData);
     }
   };
 
-  const renderItem = ({ item }: { item: Data }) => (
-    <View style={styles.itemContainer}>
-      <Text style={styles.itemText}>{item.activity}</Text>
-    </View>
-  );
+  const handleDelete = async (index: number) => {
+    Alert.alert(
+      "Confirmation",
+      "Are you sure you want to delete this item?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: async () => {
+            const updatedSavedData = savedData.filter((_, i) => i !== index);
+            setSavedData(updatedSavedData);
+            await saveData(updatedSavedData);
+          },
+          style: "destructive",
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   return (
-    <View>
-      <Text style={{
-        fontSize: 22,
-        padding: 20,
-      }}>Random Activity</Text>
-      <Pressable
-        style={{
-            padding: 10,
-            backgroundColor: 'lightgray',
-            borderRadius: 10,
-            width: 200,
-          }}
-        onPress={() => {
-          fetchData();
-        }}
-      >
-        <Text>
-          Refresh
-        </Text>
-      </Pressable>
-      <View style={{
-        padding: 12,
-      }}>
-        <Text>{data?.activity || '-'}</Text>
-        <Text>({data?.type})</Text>
-        <Pressable
-          style={{
-            padding: 10,
-            backgroundColor: 'lightgray',
-            borderRadius: 10,
-            width: 200,
-          }}
-          onPress={() => {
-            console.log('test')
-            setSavedData([...savedData, data])
-          }}
-        >
-          <Text>Save</Text>
-        </Pressable>
-      </View>
-      <View style={{ padding: 12 }}>
-        <Text>Saved Data:</Text>
-        {savedData.map(data => (
-          <Text>{data.activity}</Text>
-        ))}
-      </View>
-    </View>
+    <LinearGradient
+      colors={["rgba(58, 131, 244, 0.4)", "rgba(9, 181, 211, 0.4)"]}
+      style={styles.gradient}
+    >
+      <SavedActivities savedData={savedData} handleDelete={handleDelete} />
+      <GenerateActivity
+        data={data}
+        fetchData={fetchData}
+        handleSave={handleSave}
+      />
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  gradient: {
+    width: "100%",
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  itemContainer: {
-    backgroundColor: '#f9c2ff',
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-  },
-  itemText: {
-    fontSize: 16,
   },
 });
 
